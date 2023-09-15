@@ -1,15 +1,15 @@
 package main
 
 import (
-	// _ "database/sql"
+	"database/sql"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 
-	_ "github.com/mattn/go-sqlite3" // need cgo, bud support windows
-	// _ "modernc.org/sqlite" // cgo free, but don't support windows
-	"xorm.io/xorm"
+	// _ "github.com/mattn/go-sqlite3" // need cgo, bud support windows
+	_ "modernc.org/sqlite" // cgo free, but don't support windows
 
 	// color
 	"github.com/gookit/color"
@@ -49,29 +49,11 @@ func init() {
 
 func main() {
 
-	var engine, err = xorm.NewEngine("sqlite3", dbPath("cangjie.db"))
-	if err != nil {
-		panic(err)
-	}
-	querys := os.Args[1:]
-
-	if len(querys) == 0 {
-		fmt.Println(HelpInfo)
-		os.Exit(1)
-	}
-
-	if querys[0] == "-r" || querys[0] == "--reinstall" {
-		err = reinstallDB()
-		if err != nil {
-			panic(err)
-		}
-		color.Redln("cangjie.db 重建成功")
-		os.Exit(0)
-	}
+	querys := parseArgs(os.Args[1:])
 
 	for _, query := range querys {
 		entry := new(Entry)
-		_, err = engine.Table("entry").Where("char=?", query).Get(entry)
+		entry, err := doQuery(query)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -95,12 +77,80 @@ func main() {
 
 			fmt.Println()
 		}
-		// fmt.Printf("%T\n", entry.Forms)
 	}
+}
+
+func parseArgs(args []string) (querys []string) {
+	var err error
+	if len(args) == 0 {
+		fmt.Println(HelpInfo)
+		os.Exit(1)
+	}
+
+	if args[0] == "-r" || args[0] == "--reinstall" {
+		err = reinstallDB()
+		if err != nil {
+			panic(err)
+		}
+		color.Redln("cangjie.db 重建成功")
+		os.Exit(0)
+	}
+
+	for _, arg := range args {
+		for _, query := range arg {
+			querys = append(querys, string(query))
+		}
+	}
+
+	return
+
+}
+
+func doQuery(query string) (*Entry, error) {
+	db, err := sql.Open("sqlite", dbPath("cangjie.db"))
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	q := fmt.Sprintf("select form from entry where char='%s'", query)
+	row, err := db.Query(q)
+	if err != nil {
+		// fmt.Print("faild to query")
+		return nil, err
+	}
+
+	defer row.Close()
+
+	var form string
+	for row.Next() {
+		err = row.Scan(&form)
+		if err != nil {
+			return nil, err
+		}
+	}
+	// fmt.Println(form)
+
+	var result []string
+	err = json.Unmarshal([]byte(form), &result)
+	if err != nil {
+		return nil, err
+	}
+
+	entry := Entry{
+		Char:  query,
+		Forms: result,
+	}
+
+	return &entry, nil
+
 }
 
 // Ascii to Hans
 func atohan(s string) string {
+
+	var result string
+
 	table := map[string]string{
 		"a": "日",
 		"b": "月",
@@ -129,7 +179,11 @@ func atohan(s string) string {
 		"y": "卜",
 		"z": "符",
 	}
-	return table[s]
+
+	for _, char := range s {
+		result += table[string(char)]
+	}
+	return result
 }
 
 // reinstallDB is a function that reinstall the database.
