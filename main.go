@@ -87,7 +87,7 @@ func parseArgs(args []string) (querys []string) {
 	var err error
 	if len(args) == 0 {
 		fmt.Println(HelpInfo)
-		os.Exit(1)
+		os.Exit(0)
 	}
 
 	if args[0] == "-r" || args[0] == "--reinstall" {
