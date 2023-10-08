@@ -3,9 +3,12 @@ module cj
 go 1.18
 
 require (
+	github.com/adamzy/cedar-go v0.0.0-20170805034717-80a9c64b256d // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/google/uuid v1.3.1 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
+	github.com/liuzl/cedar-go v0.0.0-20170805034717-80a9c64b256d // indirect
+	github.com/liuzl/da v0.0.0-20180704015230-14771aad5b1d // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
@@ -25,6 +28,7 @@ require (
 
 require (
 	github.com/gookit/color v1.5.4
+	github.com/liuzl/gocc v0.0.0-20230104115651-c793537006ac
 	github.com/mattn/go-sqlite3 v1.14.17 // indirect
 	modernc.org/sqlite v1.25.0
 )

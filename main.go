@@ -5,14 +5,17 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	// _ "github.com/mattn/go-sqlite3" // need cgo, bud support windows
 	_ "modernc.org/sqlite" // cgo free, but don't support windows
 
 	// color
 	"github.com/gookit/color"
+	"github.com/liuzl/gocc"
 )
 
 type Entry struct {
@@ -99,10 +102,41 @@ func parseArgs(args []string) (querys []string) {
 	for _, arg := range args {
 		for _, query := range arg {
 			querys = append(querys, string(query))
+			querys = append(querys, convertToSimpleChinese(string(query)))
 		}
 	}
 
+	querys = removeDuplicates(strings.Join(querys, ""))
 	return
+
+}
+
+func removeDuplicates(input string) []string {
+	charMap := make(map[rune]bool)
+	result := []string{}
+
+	for _, char := range input {
+		if !charMap[char] {
+			charMap[char] = true
+			result = append(result, string(char))
+		}
+	}
+
+	return result
+}
+
+func convertToSimpleChinese(arg string) string {
+	t2s, err := gocc.New("t2s")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	simpleChinese, err := t2s.Convert(arg)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return simpleChinese
 
 }
 
